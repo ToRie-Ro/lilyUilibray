@@ -33,7 +33,7 @@ local function tween(obj, props, time, style, direction)
 end
 
 -- Create main ScreenGui
-local screenGui = make("ScreenGui", {Name = "CoolUILibrary", Parent = playerGui, ResetOnSpawn = false})
+local screenGui = make("ScreenGui", {Name = "Lunar Hub", Parent = playerGui, ResetOnSpawn = false})
 screenGui.DisplayOrder = 999
 
 -- Main Window
