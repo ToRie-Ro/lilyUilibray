@@ -1,3 +1,7 @@
+-- Banana Cat Hub Style UI Library
+-- Dark Neon Minimal / Draggable / Tabs / Minimize / Maximize / Close
+-- By ToRie & ChatGPT
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -26,14 +30,13 @@ function Library:CreateWindow(Config)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
-	-- Corner + Shadow
 	local Corner = Instance.new("UICorner", Main)
 	Corner.CornerRadius = UDim.new(0, 12)
 
-	local UIStroke = Instance.new("UIStroke", Main)
-	UIStroke.Thickness = 1.5
-	UIStroke.Color = Color3.fromRGB(0, 255, 200)
-	UIStroke.Transparency = 0.5
+	local Stroke = Instance.new("UIStroke", Main)
+	Stroke.Color = Color3.fromRGB(0, 255, 200)
+	Stroke.Thickness = 1.4
+	Stroke.Transparency = 0.6
 
 	-- TopBar
 	local TopBar = Instance.new("Frame")
@@ -55,26 +58,47 @@ function Library:CreateWindow(Config)
 	TitleLabel.BackgroundTransparency = 1
 	TitleLabel.Parent = TopBar
 
-	-- Window Buttons
-	local function MakeButton(name, symbol, offsetX)
+	local function MakeBtn(name, text, offset)
 		local Btn = Instance.new("TextButton")
 		Btn.Name = name
-		Btn.Text = symbol
+		Btn.Text = text
 		Btn.Font = Enum.Font.GothamBold
 		Btn.TextSize = 16
 		Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 		Btn.Size = UDim2.new(0, 28, 0, 28)
-		Btn.Position = UDim2.new(1, offsetX, 0, 1)
+		Btn.Position = UDim2.new(1, offset, 0, 1)
 		Btn.Parent = TopBar
 		local corner = Instance.new("UICorner", Btn)
 		corner.CornerRadius = UDim.new(0, 6)
 		return Btn
 	end
 
-	local Minimize = MakeButton("Minimize", "🗕", -90)
-	local Maximize = MakeButton("Maximize", "🗖", -60)
-	local Close = MakeButton("Close", "✖", -30)
+	local Minimize = MakeBtn("Minimize", "🗕", -90)
+	local Maximize = MakeBtn("Maximize", "🗖", -60)
+	local Close = MakeBtn("Close", "✖", -30)
+
+	-- Tab Holder
+	local TabHolder = Instance.new("Frame")
+	TabHolder.Name = "TabHolder"
+	TabHolder.Size = UDim2.new(0, TabWidth, 1, -30)
+	TabHolder.Position = UDim2.new(0, 0, 0, 30)
+	TabHolder.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+	TabHolder.BorderSizePixel = 0
+	TabHolder.Parent = Main
+
+	local TabList = Instance.new("UIListLayout", TabHolder)
+	TabList.Padding = UDim.new(0, 5)
+	TabList.SortOrder = Enum.SortOrder.LayoutOrder
+
+	-- Content Holder
+	local ContentHolder = Instance.new("Frame")
+	ContentHolder.Name = "ContentHolder"
+	ContentHolder.Size = UDim2.new(1, -TabWidth, 1, -30)
+	ContentHolder.Position = UDim2.new(0, TabWidth, 0, 30)
+	ContentHolder.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+	ContentHolder.BorderSizePixel = 0
+	ContentHolder.Parent = Main
 
 	-- Dragging
 	local dragging = false
@@ -101,7 +125,7 @@ function Library:CreateWindow(Config)
 	-- Button Functions
 	local minimized = false
 	Minimize.MouseButton1Click:Connect(function()
-		local goal = minimized and UDim2.fromOffset(Size.X.Offset, Size.Y.Offset) or UDim2.fromOffset(Size.X.Offset, 30)
+		local goal = minimized and Size or UDim2.fromOffset(Size.X.Offset, 30)
 		TweenService:Create(Main, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = goal}):Play()
 		minimized = not minimized
 	end)
@@ -122,7 +146,62 @@ function Library:CreateWindow(Config)
 		ScreenGui:Destroy()
 	end)
 
-	return setmetatable({Main = Main, TopBar = TopBar}, Library)
+	-- Create Tabs
+	local function CreateTab(name)
+		local Button = Instance.new("TextButton")
+		Button.Name = name .. "_TabButton"
+		Button.Text = name
+		Button.Font = Enum.Font.GothamSemibold
+		Button.TextSize = 14
+		Button.Size = UDim2.new(1, -10, 0, 28)
+		Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Button.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+		Button.BorderSizePixel = 0
+		Button.Parent = TabHolder
+
+		local corner = Instance.new("UICorner", Button)
+		corner.CornerRadius = UDim.new(0, 8)
+
+		local Content = Instance.new("ScrollingFrame")
+		Content.Name = name .. "_Content"
+		Content.Size = UDim2.new(1, -10, 1, -10)
+		Content.Position = UDim2.new(0, 5, 0, 5)
+		Content.BackgroundTransparency = 1
+		Content.ScrollBarThickness = 4
+		Content.Visible = false
+		Content.Parent = ContentHolder
+
+		local Layout = Instance.new("UIListLayout", Content)
+		Layout.Padding = UDim.new(0, 5)
+		Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+		Button.MouseButton1Click:Connect(function()
+			for _, child in ipairs(ContentHolder:GetChildren()) do
+				if child:IsA("ScrollingFrame") then
+					child.Visible = false
+				end
+			end
+			for _, b in ipairs(TabHolder:GetChildren()) do
+				if b:IsA("TextButton") then
+					b.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+				end
+			end
+			Content.Visible = true
+			Button.BackgroundColor3 = Color3.fromRGB(0, 200, 150)
+		end)
+
+		return Content
+	end
+
+	local defaultTab = CreateTab("Main")
+	defaultTab.Visible = true
+	TabHolder:FindFirstChild("Main_TabButton").BackgroundColor3 = Color3.fromRGB(0, 200, 150)
+
+	return setmetatable({
+		Main = Main,
+		CreateTab = CreateTab,
+		ContentHolder = ContentHolder
+	}, Library)
 end
 
 return Library
